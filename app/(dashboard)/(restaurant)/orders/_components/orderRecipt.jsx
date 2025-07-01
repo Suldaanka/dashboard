@@ -37,7 +37,7 @@ export default function OrderRecipt({ data }) {
   const grandTotal = subtotal + tax;
   return (
     <div className="max-w-md mx-auto">
-      <PrinterIcon onClick={reactToPrintFn} />
+      <PrinterIcon onClick={reactToPrintFn} className="text-green-500"/>
 
       <div
         ref={contentRef} 

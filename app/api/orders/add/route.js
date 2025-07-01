@@ -22,45 +22,98 @@ export async function POST(req) {
         return NextResponse.json({ error: `Table with ID ${tableId} not found.` }, { status: 404 });
       }
 
-      // Optional: Prevent order if table is already occupied (depending on business logic)
-      // Check if the table status is already OCCUPIED or RESERVED
-      if (existingTable.status === "OCCUPIED" || existingTable.status === "RESERVED") {
-        // Warning about table status handled with response
-        // Uncomment the line below if you want to prevent placing an order on an already occupied/reserved table
-        // return NextResponse.json({ error: `Table ${tableId} is already ${existingTable.status}.` }, { status: 409 });
+      // Find an active order for this table (not cancelled or paid)
+      const activeOrder = await prisma.order.findFirst({
+        where: {
+          tableId,
+          status: { in: ["PENDING", "IN_PROGRESS", "SERVED"] },
+        },
+        include: { items: true },
+      });
+
+      if (activeOrder) {
+        // Check for existing items and update quantities, or create new items
+        for (const newItem of items) {
+          const existingItem = await prisma.orderItem.findFirst({
+            where: {
+              orderId: activeOrder.id,
+              menuItemId: newItem.menuItemId
+            }
+          });
+
+          if (existingItem) {
+            // Update existing item quantity and price
+            await prisma.orderItem.update({
+              where: { id: existingItem.id },
+              data: {
+                quantity: existingItem.quantity + newItem.quantity,
+                price: new Decimal(existingItem.price).plus(new Decimal(newItem.price))
+              }
+            });
+          } else {
+            // Create new item
+            await prisma.orderItem.create({
+              data: {
+                orderId: activeOrder.id,
+                menuItemId: newItem.menuItemId,
+                quantity: newItem.quantity,
+                price: new Decimal(newItem.price)
+              }
+            });
+          }
+        }
+
+        // Recalculate order total from all order items
+        const allOrderItems = await prisma.orderItem.findMany({
+          where: { orderId: activeOrder.id }
+        });
+        const recalculatedTotal = allOrderItems.reduce((sum, item) => sum.plus(new Decimal(item.price)), new Decimal(0));
+
+        const updatedOrder = await prisma.order.update({
+          where: { id: activeOrder.id },
+          data: {
+            total: recalculatedTotal
+          },
+          include: { items: true }
+        });
+        return NextResponse.json(updatedOrder, { status: 200 });
+      } else {
+        // No active order, create a new one
+        const order = await prisma.order.create({
+          data: {
+            userId,
+            tableId,
+            roomId,
+            status: status || "PENDING",
+            total: new Decimal(total),
+            items: {
+              create: items.map((item) => ({
+                menuItemId: item.menuItemId,
+                quantity: item.quantity,
+                price: new Decimal(item.price),
+              })),
+            },
+          },
+          include: {
+            items: true,
+          },
+        });
+        // Update table status to OCCUPIED
+        await prisma.table.update({
+          where: { id: tableId },
+          data: { status: "OCCUPIED" },
+        });
+        return NextResponse.json(order, { status: 201 });
       }
     }
 
-    // --- Create the Order ---
-    const order = await prisma.order.create({
-      data: {
-        userId,
-        tableId,
-        roomId,
-        status: status || "PENDING", // Default status to PENDING if not provided
-        total: new Decimal(total), // Ensure total is a Decimal type
-        items: {
-          create: items.map((item) => ({
-            menuItemId: item.menuItemId,
-            quantity: item.quantity,
-            price: new Decimal(item.price), // Ensure item price is Decimal
-          })),
-        },
-      },
-      include: {
-        items: true, // Include the associated order items in the response
-      },
-    });
-
-    // --- Update Table Status to Occupied (if a tableId was provided) ---
-    if (tableId) {
-      await prisma.table.update({
-        where: { id: tableId },
-        data: { status: "OCCUPIED" }, // Update the 'status' field to 'OCCUPIED'
-      });
+    // Optional: Prevent order if table is already occupied (depending on business logic)
+    // Check if the table status is already OCCUPIED or RESERVED
+    if (existingTable.status === "OCCUPIED" || existingTable.status === "RESERVED") {
+      // Warning about table status handled with response
+      // Uncomment the line below if you want to prevent placing an order on an already occupied/reserved table
+      // return NextResponse.json({ error: `Table ${tableId} is already ${existingTable.status}.` }, { status: 409 });
     }
-
-    return NextResponse.json(order, { status: 201 }); // Return the created order with a 201 Created status
   } catch (error) {
     // Error handled with response
 

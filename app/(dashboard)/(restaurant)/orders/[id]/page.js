@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import Loading from "@/components/Loading";
+import OrderRecipt from "../_components/orderRecipt";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -125,7 +126,8 @@ export default function OrderDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 pt-0 px-4 max-w-4xl">
+    <div className="container m-auto py-8 pt-0 px-4 max-w-5xl">
+
       <div className="p-5">
         <Link href={`/orders`} className="text-2xl font-bold pb-5">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -157,7 +159,7 @@ export default function OrderDetailsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Placed At</p>
               <p className="font-medium">{formatDate(order.createdAt)}</p>
@@ -179,8 +181,14 @@ export default function OrderDetailsPage() {
               <p className="font-semibold text-lg text-foreground">
                 ${parseFloat(order.total).toFixed(2)}
               </p>
+          
             </div>
+            <div className="mt-4 flex">
+            <OrderRecipt data={order} className="textreen-500"/>
           </div>
+          </div>
+          {/* Print Order Receipt Button */}
+          
         </CardContent>
       </Card>
 
