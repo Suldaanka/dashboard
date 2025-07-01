@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { QrReader } from "react-qr-reader";
 
 const STATUS_OPTIONS = ["PENDING", "IN_PROGRESS", "SERVED", "CANCELLED", "IS_PAYED"];
 
@@ -141,8 +142,8 @@ export default function Page() {
               })}
             </div>
 
-            {/* Search Input */}
-            <div className="w-full md:w-64">
+            {/* Search Input and QR Scanner */}
+            <div className="w-full md:w-64 flex gap-2 items-center">
               <Input
                 type="text"
                 placeholder="Search by order ID..."
@@ -150,6 +151,18 @@ export default function Page() {
                 onChange={(e) => setSearchId(e.target.value)}
                 className="w-full"
               />
+              <div style={{ width: 32, height: 32 }}>
+                <QrReader
+                  onResult={(result, error) => {
+                    if (!!result) {
+                      setSearchId(result?.text || "");
+                    }
+                  }}
+                  constraints={{ facingMode: "environment" }}
+                  containerStyle={{ width: "100%", height: "100%" }}
+                  videoStyle={{ width: "100%", height: "100%" }}
+                />
+              </div>
             </div>
           </div>
 

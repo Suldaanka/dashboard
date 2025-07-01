@@ -93,13 +93,13 @@ export default function OrderRecipt({ data }) {
           <div className="flex justify-between font-bold text-base">
             <span>GRAND TOTAL:</span>
             <span>${grandTotal.toFixed(2)}</span>
+            
           </div>
         </div>
         <Divider />
 
         <div className="flex justify-center mb-2">
-
-          <QRCodeSVG value={data.id} />,
+          <QRCodeSVG value={data.id} />
         </div>
 
         <p className="text-center text-xs">Scan for order details</p>
