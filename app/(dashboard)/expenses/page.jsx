@@ -8,6 +8,7 @@ import Loading from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AddExpense } from "./_components/addExpense";
 
 export default function ExpenseDashboard() {
   const queryClient = useQueryClient();
@@ -70,10 +71,9 @@ export default function ExpenseDashboard() {
           <p className="text-muted-foreground max-w-md mb-4">
             Start tracking your expenses by adding your first entry.
           </p>
-          <Button>
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Add Expense
-          </Button>
+          <div>
+            <AddExpense/>
+          </div>
         </div>
       ) : (
         <div className="">

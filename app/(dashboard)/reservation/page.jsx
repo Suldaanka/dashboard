@@ -5,9 +5,7 @@ import { DataTable } from "../expenses/data-table";
 import { useFetch } from "@/hooks/useFetch";
 import { useQueryClient } from "@tanstack/react-query";
 import Loading from "@/components/Loading";
-import { useSelector } from "react-redux";
-import { Addreservation } from "./_components/add";
-import { useAuth } from "@clerk/nextjs";
+
 
 export default function Page() {
   const queryClient = useQueryClient();

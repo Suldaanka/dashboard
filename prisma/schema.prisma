@@ -29,6 +29,10 @@ model User {
   orders    Order[]   // List of orders placed by this user
   payments  Payment[] // List of payments made by this user
   expenses  Expense[] // List of expenses associated with this user (paidBy)
+
+  // RBAC relation
+  roleModel   RoleModel? @relation("UserRole", fields: [roleModelId], references: [id])
+  roleModelId String?
 }
 
 // Enum for User roles
@@ -234,4 +238,28 @@ model Expense {
 enum ExpenseType {
   INCOME
   OUTCOME
+}
+
+// --- RBAC Models for Persistent Permissions ---
+model Permission {
+  id    String @id @default(cuid())
+  name  String @unique // e.g., 'dashboard', 'rooms', 'orders', etc.
+  roles RolePermission[]
+}
+
+model RoleModel {
+  id    String @id @default(cuid())
+  name  String @unique // e.g., 'ADMIN', 'WAITER', etc.
+  users User[] @relation("UserRole")
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id           String      @id @default(cuid())
+  role         RoleModel   @relation(fields: [roleId], references: [id])
+  roleId       String
+  permission   Permission  @relation(fields: [permissionId], references: [id])
+  permissionId String
+
+  @@unique([roleId, permissionId])
 }

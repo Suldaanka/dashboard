@@ -1,18 +1,19 @@
-"use client"
+"use client";
+
 import { useState } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -36,7 +37,7 @@ export const UpdateUserRoleDialog = ({ isOpen, onClose, user, onRoleUpdate }) =>
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/users/update/${user.id}`, {
+      const response = await fetch(`/api/users/update/${user.clerkId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -47,23 +48,14 @@ export const UpdateUserRoleDialog = ({ isOpen, onClose, user, onRoleUpdate }) =>
       const data = await response.json();
 
       if (response.ok) {
-        toast("Role updated successfully",);
+        toast.success("Role updated successfully");
         onRoleUpdate(selectedRole);
         onClose();
       } else {
-        toast({
-          title: "Update failed",
-          description: data.error || "Failed to update user role",
-          variant: "destructive",
-        });
+        toast.error(data.error || "Failed to update user role");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "An error occurred while updating the role",
-        variant: "destructive",
-      });
-      // Error already handled with setError
+      toast.error("An error occurred while updating the role");
     } finally {
       setIsSubmitting(false);
     }
@@ -79,9 +71,9 @@ export const UpdateUserRoleDialog = ({ isOpen, onClose, user, onRoleUpdate }) =>
           <div className="mb-2 text-sm text-gray-500">
             Current role: <span className="font-medium">{user.role}</span>
           </div>
-          <Select 
+          <Select
             defaultValue={user.role}
-            value={selectedRole} 
+            value={selectedRole}
             onValueChange={setSelectedRole}
           >
             <SelectTrigger className="w-full">
@@ -100,10 +92,10 @@ export const UpdateUserRoleDialog = ({ isOpen, onClose, user, onRoleUpdate }) =>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleRoleChange} 
+          <Button
+            onClick={handleRoleChange}
             disabled={isSubmitting || selectedRole === user.role}
-            className={`${selectedRole === user.role ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`${selectedRole === user.role ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {isSubmitting ? "Updating..." : "Update Role"}
           </Button>

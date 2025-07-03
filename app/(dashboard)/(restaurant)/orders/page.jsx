@@ -49,10 +49,10 @@ export default function Page() {
   if (status === 'loading' || !user) return <Loading/>;
   
   // Redirect immediately if user role is not allowed
-  if (user.role !== 'WAITER' && user.role !== 'ADMIN') {
+ /*  if (user.role !== 'WAITER' && user.role !== 'ADMIN') {
     router.push('/');
     return null;
-  }
+  } */
   
   if (isLoading || !data) return <Loading />;
   

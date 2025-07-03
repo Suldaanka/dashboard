@@ -11,6 +11,8 @@ import Orderside from "./_components/Orderside";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useUser } from "@clerk/nextjs"
+import AccessDenied from "@/components/accessDenied";
 
 export default function Page({ sidebarCollapsed, orderSideCollapsed }) {
   const { data: menuItems, isLoading, isError, mutate } = useFetch("/api/menu", ["menu"]);
@@ -18,6 +20,7 @@ export default function Page({ sidebarCollapsed, orderSideCollapsed }) {
   const [filteredItems, setFilteredItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const { user, isLoaded } = useUser()
 
   // Extract unique categories when data loads
   const categories = menuItems && menuItems.length > 0 ?
@@ -56,6 +59,12 @@ export default function Page({ sidebarCollapsed, orderSideCollapsed }) {
 
   if (isLoading) return <Loading />;
   const isEmpty = !menuItems || menuItems.length === 0;
+
+
+  if (!isLoaded) return null
+
+  const role = user?.publicMetadata?.role
+  if (!["ADMIN", "WAITER"].includes(role)) return <AccessDenied />
 
   return (
     <div className="flex flex-col gap-4">

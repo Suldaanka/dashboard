@@ -124,7 +124,7 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                <Link href={`/users/profile/${userId}`} className="w-full h-full flex items-center gap-2">Account</Link>
+                <Link href={`/users/profile`} className="w-full h-full flex items-center gap-2">Account</Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
