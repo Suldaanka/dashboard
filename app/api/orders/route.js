@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET() {
+async function handler() {
     try {
         const orders = await prisma.order.findMany({
             include: {
@@ -30,3 +31,5 @@ export async function GET() {
         );
     }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET() {
+async function handler() {
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Ignore time portion
@@ -30,14 +31,17 @@ export async function GET() {
                     data: { status: "AVAILABLE" },
                 });
             }
-        }
-
-        return NextResponse.json(bookings, { status: 200 });
-    } catch (error) {
-        // Error handled with response
-        return NextResponse.json(
-            { error: "Something went wrong" },
-            { status: 500 }
-        );
-    }
 }
+
+    return NextResponse.json(bookings, { status: 200 });
+} catch (error) {
+    // Error handled with response
+    return NextResponse.json(
+        { error: "Something went wrong" },
+        { status: 500 }
+    );
+}
+}
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER']);
+    

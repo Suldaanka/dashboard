@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
 const prisma = new PrismaClient();
 
-export async function PATCH(request, context) {
+async function handler(request, context) {
   try {
     const { id } = context.params;
     const { status } = await request.json();
@@ -81,6 +82,8 @@ export async function PATCH(request, context) {
     );
   }
 }
+
+export const PATCH = withRoleCheck(handler, ['admin', 'manager', 'waiter']);
 
 export async function OPTIONS() {
   return NextResponse.json(

@@ -3,8 +3,9 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import * as fs from "fs";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function PUT(req, context) {
+async function handler(req, context) {
   const params = await context.params;
   const id = params.id;
 
@@ -85,3 +86,5 @@ export async function PUT(req, context) {
     );
   }
 }
+
+export const PUT = withRoleCheck(handler, ['admin', 'manager']);

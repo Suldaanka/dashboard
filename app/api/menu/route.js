@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET() {
+async function handler() {
     try {
         const menu = await prisma.menuItem.findMany();
         return NextResponse.json(menu, {status: 200});
@@ -12,3 +13,5 @@ export async function GET() {
         );
     }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);

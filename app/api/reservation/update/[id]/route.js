@@ -2,8 +2,9 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function PUT(request, { params }) {
+async function handler(request, { params }) {
   try {
     const { id } = params;
     const data = await request.json();
@@ -83,3 +84,5 @@ export async function PUT(request, { params }) {
     );
   }
 }
+
+export const PUT = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

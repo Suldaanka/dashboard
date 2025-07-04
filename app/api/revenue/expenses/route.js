@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(req) {
+async function handler(req) {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), 1)
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
@@ -38,3 +39,5 @@ export async function GET(req) {
 
   return NextResponse.json(mixedData)
 }
+
+export const GET = withRoleCheck(handler, ['admin', 'manager']);

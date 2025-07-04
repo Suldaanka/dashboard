@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; // Adjust path if your prisma.js is elsewhere
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(req, context) {
+async function handler(req, context) {
     // Correct way: context.params is already an object, no need to await it.
     const id = context.params.id;
 
@@ -24,3 +25,5 @@ export async function GET(req, context) {
         );
     }
 }
+
+export const GET = withRoleCheck(handler, ['admin', 'manager', 'waiter']);

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function PATCH(request, context) {
+async function handler(request, context) {
   const params = await context.params;
 
   try {
@@ -23,3 +24,5 @@ export async function PATCH(request, context) {
     return NextResponse.json({ message: 'Error updating table status', error: error.message }, { status: 500 });
   }
 }
+
+export const PATCH = withRoleCheck(handler, ['admin', 'manager', 'waiter']);

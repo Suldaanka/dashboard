@@ -4,8 +4,9 @@ import { join } from 'path';
 import { prisma } from "@/lib/prisma";
 // Import the regular fs module, not the promises version for checking directory existence
 import * as fs from 'fs';
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function POST(req) {
+async function handler(req) {
   try {
     const formData = await req.formData();
     
@@ -129,3 +130,5 @@ export async function POST(req) {
     );
   }
 }
+
+export const POST = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

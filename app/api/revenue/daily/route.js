@@ -1,8 +1,9 @@
 // app/api/dashboard/revenue/daily/route.ts
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(req) {
+async function handler(req) {
   const dateStr = req.nextUrl.searchParams.get('date')
   if (!dateStr) return NextResponse.json({ error: 'Missing date param' }, { status: 400 })
 
@@ -59,3 +60,5 @@ export async function GET(req) {
     }
   })
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

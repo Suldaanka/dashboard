@@ -1,8 +1,9 @@
 // /api/orders/[id]/items/route.js
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(req, context) {
+async function handler(req, context) {
   const { id } = await context.params;
 
   try {
@@ -29,3 +30,5 @@ export async function GET(req, context) {
     return NextResponse.json({ error: "Failed to fetch order", details: error.message }, { status: 500 });
   }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);

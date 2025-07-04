@@ -1,8 +1,9 @@
 // /api/rooms/update/[id]/route.js
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function PUT(request, context) {
+async function handler(request, context) {
   try {
     const { id } = context.params;
     const data = await request.json();
@@ -49,3 +50,5 @@ export async function PUT(request, context) {
     }, { status: 500 });
   }
 }
+
+export const PUT = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

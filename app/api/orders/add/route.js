@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma"; // adjust path if needed
 import { Decimal } from "@prisma/client/runtime/library"; // required for Decimal type
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function POST(req) {
+async function handler(req) {
   try {
     const body = await req.json();
     const { userId, tableId, roomId, items, total, status } = body;
@@ -127,3 +128,5 @@ export async function POST(req) {
     return NextResponse.json({ error: "Something went wrong during order processing." }, { status: 500 });
   }
 }
+
+export const POST = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);

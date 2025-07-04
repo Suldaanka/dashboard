@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function POST(req) {
+async function handler(req) {
     try {
         const body = await req.json();
         
@@ -28,9 +29,12 @@ export async function POST(req) {
         return NextResponse.json(room, { status: 201 });
     } catch (error) {
         // Error handled with response
+    }
+}
+
+export const POST = withRoleCheck(handler, ['ADMIN', 'MANAGER']);
         return NextResponse.json(
             { error: `Error creating room: ${error.message}` },
             { status: 500 }
         );
-    }
-}
+    

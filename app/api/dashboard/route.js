@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma"; // Ensure this path correctly exports your Prisma client
 import { NextResponse } from "next/server";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET() {
+async function handler() {
   try {
     // Note: It's generally not necessary to explicitly call $connect() and $disconnect()
     // within each API route if you're using a global Prisma client instance (recommended pattern).
@@ -189,3 +190,5 @@ export async function GET() {
     // await prisma.$disconnect(); // Removing explicit disconnect if using global instance
   }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

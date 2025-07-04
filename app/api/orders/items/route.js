@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request, { params }) {
+import { withRoleCheck } from '@/lib/withRoleCheck';
+
+async function handler(request) {
+    const orderId = request.nextUrl.searchParams.get('orderId');
+
+    if (!orderId) {
     const orderId = params.orderId;
 
     if (!orderId) {
@@ -33,3 +38,5 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: 'Failed to fetch order', details: error.message || error.toString() }, { status: 500 });
     }
 }
+
+export const GET = withRoleCheck(handler, ['admin', 'manager', 'waiter']);

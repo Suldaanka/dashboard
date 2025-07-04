@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from "@/lib/prisma"; // Adjust path if your prisma.js is elsewhere
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(request, context) {
+async function handler(request, context) {
     // Next.js 15 requires asynchronous access to params
     // Next.js 15 requires asynchronous access to params
     const { id: userId } = await context.params;
@@ -25,3 +26,5 @@ export async function GET(request, context) {
         );
     }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);

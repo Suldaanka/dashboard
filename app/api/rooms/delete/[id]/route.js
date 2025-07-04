@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-
-export async function DELETE(request, context) {
+async function handler(request, context) {
   const params = await context.params;
   const id = params.id;
 
@@ -36,3 +36,5 @@ export async function DELETE(request, context) {
     )
   }
 }
+
+export const DELETE = withRoleCheck(handler, ['ADMIN', 'MANAGER']);

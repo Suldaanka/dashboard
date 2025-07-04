@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET(req) {
+async function handler(req) {
   const monthStr = req.nextUrl.searchParams.get('month') // format: YYYY-MM
   if (!monthStr) return NextResponse.json({ error: 'Missing month param' }, { status: 400 })
 
@@ -98,3 +99,5 @@ export async function GET(req) {
     }
   })
 }
+
+export const GET = withRoleCheck(handler, ['admin', 'manager']);

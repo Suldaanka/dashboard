@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function GET() {
+async function handler() {
     try {
         await prisma.$connect();
         const tables = await prisma.table.findMany();
@@ -16,3 +17,5 @@ export async function GET() {
         prisma.$disconnect();
     }
 }
+
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);

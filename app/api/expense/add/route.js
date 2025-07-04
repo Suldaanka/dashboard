@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRoleCheck } from '@/lib/withRoleCheck';
 
-export async function POST(req) {
+async function handler(req) {
     try {
         const body = await req.json();
         
@@ -36,6 +37,8 @@ export async function POST(req) {
         );
     }
 }
+
+export const POST = withRoleCheck(handler, ['ADMIN', 'MANAGER']);
 
 
  
