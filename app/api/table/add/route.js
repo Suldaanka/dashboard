@@ -32,7 +32,3 @@ async function handler(req) {
 }
 
 export const POST = withRoleCheck(handler, ['ADMIN', 'MANAGER']);
-        return NextResponse.json(
-            { error: `Error creating table: ${error.message}` },
-            { status: 500 }
-        );

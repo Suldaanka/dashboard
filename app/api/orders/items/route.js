@@ -7,9 +7,6 @@ async function handler(request) {
     const orderId = request.nextUrl.searchParams.get('orderId');
 
     if (!orderId) {
-    const orderId = params.orderId;
-
-    if (!orderId) {
         return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
@@ -39,4 +36,4 @@ async function handler(request) {
     }
 }
 
-export const GET = withRoleCheck(handler, ['admin', 'manager', 'waiter']);
+export const GET = withRoleCheck(handler, ['ADMIN', 'MANAGER', 'WAITER']);
