@@ -1,0 +1,265 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model: Represents a user in the system.
+// clerkId is used for integration with Clerk authentication.
+model User {
+  id        String    @id @default(cuid()) // Unique ID for the user
+  clerkId   String    @unique // Clerk's unique ID for the user
+  name      String?   // Optional full name of the user
+  email     String    @unique // Unique email address
+  imageUrl  String?   // URL to the user's profile image
+  role      Role      @default(USER) // User's role (e.g., ADMIN, STAFF, USER)
+  createdAt DateTime  @default(now()) // Timestamp when the record was created
+  updatedAt DateTime  @updatedAt // Timestamp when the record was last updated
+
+  // Relations:
+  // onDelete: Cascade - If a user is deleted, all their associated bookings, orders, and payments will also be deleted.
+  // This is a common pattern for user-dependent data. Consider if this is the desired behavior for all cases.
+  bookings  Booking[] // List of bookings made by this user
+  orders    Order[]   // List of orders placed by this user
+  payments  Payment[] // List of payments made by this user
+  expenses  Expense[] // List of expenses associated with this user (paidBy)
+
+  // RBAC relation
+  roleModel   RoleModel? @relation("UserRole", fields: [roleModelId], references: [id])
+  roleModelId String?
+}
+
+// Enum for User roles
+enum Role {
+  ADMIN
+  STAFF
+  USER
+  WAITER
+  KITCHEN
+}
+
+// Room Model: Represents a physical room in the establishment.
+model Room {
+  id        String     @id @default(cuid()) // Unique ID for the room
+  number    Int        @unique // Unique room number
+  type      RoomType   // Type of the room (e.g., SINGLE, DOUBLE)
+  price     Decimal    // Price of the room
+  status    RoomStatus @default(AVAILABLE) // Current status of the room
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations:
+  // onDelete: Restrict - If a room is deleted, it will prevent deletion if there are active bookings or orders
+  // associated with it. This protects historical data or requires manual handling of linked records.
+  bookings  Booking[] // List of bookings for this room
+  orders    Order[]   // List of orders placed for this room
+}
+
+// Enum for Room types
+enum RoomType {
+  SINGLE
+  DOUBLE
+  FAMILY
+}
+
+// Enum for Room statuses
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+// Booking Model: Represents a reservation for a room.
+model Booking {
+  id          String        @id @default(cuid())
+  userId      String        // Foreign key for the User who made the booking
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade) // Link to User model; delete booking if user deleted
+  phoneNumber String?       // Optional phone number for the booking contact
+  fullName    String        // Full name of the guest
+  guest       String        // Number of guests (e.g., "2 Adults, 1 Child")
+  roomId      String        // Foreign key for the Room being booked
+  room        Room          @relation(fields: [roomId], references: [id], onDelete: Restrict) // Link to Room model; restrict deletion of room if active bookings exist
+  checkIn     DateTime      // Check-in date and time
+  checkOut    DateTime      // Check-out date and time
+  status      BookingStatus @default(PENDING) // Current status of the booking
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// Enum for Booking statuses
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// MenuItem Model: Represents an item on the menu (e.g., food, drinks).
+model MenuItem {
+  id        String         @id @default(cuid())
+  name      String         // Name of the menu item
+  price     Decimal        // Price of the menu item
+  category  String         // Category of the menu item (e.g., "Appetizer", "Main Course")
+  imageUrl  Json           // JSON array of image URLs (e.g., ["/path/to/img1.jpg", "/path/to/img2.jpg"])
+  status    MenuItemStatus @default(AVAILABLE) // Availability status of the item
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations:
+  // orders is the plural for OrderItem. This indicates one MenuItem can be part of many OrderItems.
+  orders    OrderItem[] // List of order items that include this menu item
+}
+
+// Enum for MenuItem statuses
+enum MenuItemStatus {
+  AVAILABLE
+  OUT_OF_STOCK
+}
+
+// Order Model: Represents a customer order.
+model Order {
+  id         String      @id @default(cuid())
+  userId     String?     // Optional foreign key for the User who placed the order (null if guest order)
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull) // Link to User model; set userId to null if user deleted
+  tableId    String?     // Optional foreign key for the Table associated with the order
+  table      Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull) // Link to Table model; set tableId to null if table deleted
+  roomId     String?     // Optional foreign key for the Room associated with the order
+  room       Room?       @relation(fields: [roomId], references: [id], onDelete: SetNull) // Link to Room model; set roomId to null if room deleted
+  status     OrderStatus @default(PENDING) // Current status of the order
+  total      Decimal     // Total amount of the order
+
+  // One-to-one relation with Payment
+  payment    Payment?    // Optional link to the Payment associated with this order
+  paymentId  String?     @unique // Unique foreign key for the Payment (ensures 1:1)
+
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  // Relations:
+  items      OrderItem[] // List of individual items within this order
+}
+
+// Enum for Order statuses
+enum OrderStatus {
+  PENDING      // Order has been placed, awaiting confirmation
+  IN_PROGRESS  // Order is being prepared
+  SERVED       // Order has been served to the customer
+  CANCELLED    // Order was cancelled
+  IS_PAYED     // Order has been paid (alternative to COMPLETED, or perhaps IS_PAID is better)
+}
+
+// OrderItem Model: Represents a single item within an order, linking to a MenuItem.
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String   // Foreign key for the Order this item belongs to
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade) // Link to Order model; delete order item if parent order is deleted
+  menuItemId String   // Foreign key for the MenuItem being ordered
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade) // Link to MenuItem model; delete order item if menu item is deleted
+  quantity   Int      // Quantity of the menu item in this order item
+  price      Decimal  // Price of this specific item (can be different from MenuItem.price if special pricing applies)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Table Model: Represents a physical table in the restaurant area.
+model Table {
+  id        String      @id @default(cuid())
+  number    Int         @unique // Unique table number
+  capacity  Int         // Seating capacity of the table
+  status    TableStatus @default(AVAILABLE) // Current status of the table
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations:
+  orders    Order[]     // List of orders placed at this table
+}
+
+// Enum for Table statuses
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+// Payment Model: Records payment transactions.
+model Payment {
+  id           String        @id @default(cuid())
+  userId       String?       // Optional foreign key for the User who made the payment
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull) // Link to User model; set userId to null if user deleted
+
+  orderId      String        @unique // Foreign key for the associated Order (unique for 1:1 relation)
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade) // Link to Order model; delete payment if order deleted
+
+  amount       Decimal       // Primary payment amount
+  otherAmount  Decimal?      // Optional field for tips, discounts, etc.
+  status       PaymentStatus @default(PENDING) // Current status of the payment
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// Enum for Payment statuses
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+// ExpenseCategory Model: Defines categories for expenses.
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique // Unique name for the expense category
+  expenses  Expense[] // List of expenses belonging to this category
+}
+
+// Expense Model: Records individual expenses.
+model Expense {
+  id          String          @id @default(cuid())
+  description String          // Description of the expense
+  categoryId  String          // Foreign key for the expense category
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict) // Link to ExpenseCategory; restrict deletion of category if expenses exist
+  amount      Decimal         // Amount of the expense
+  paidById    String          // Foreign key for the User who paid/incurred the expense (using clerkId here)
+  paidBy      User            @relation(fields: [paidById], references: [clerkId], onDelete: Restrict) // Link to User model; restrict deletion of user if expenses exist
+  type        String          // Type of expense (e.g., "income", "outcome") - consider using ExpenseType enum
+  date        DateTime        @default(now()) // Date of the expense
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt // Add this field for consistency if you track update times for expenses
+}
+
+// Enum for Expense types
+// You had this as `enum ExpenseType`, but then used `type String` in Expense model.
+// It's better to use the enum if the types are fixed.
+enum ExpenseType {
+  INCOME
+  OUTCOME
+}
+
+// --- RBAC Models for Persistent Permissions ---
+model Permission {
+  id    String @id @default(cuid())
+  name  String @unique // e.g., 'dashboard', 'rooms', 'orders', etc.
+  roles RolePermission[]
+}
+
+model RoleModel {
+  id    String @id @default(cuid())
+  name  String @unique // e.g., 'ADMIN', 'WAITER', etc.
+  users User[] @relation("UserRole")
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id           String      @id @default(cuid())
+  role         RoleModel   @relation(fields: [roleId], references: [id])
+  roleId       String
+  permission   Permission  @relation(fields: [permissionId], references: [id])
+  permissionId String
+
+  @@unique([roleId, permissionId])
+}
