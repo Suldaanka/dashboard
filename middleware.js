@@ -10,6 +10,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/users/(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/api/webhooks/clerk(.*)',
+  '/api/env/(.*)'
 ]);
 
 // Define protected routes (already defined for Clerk, no change needed here)

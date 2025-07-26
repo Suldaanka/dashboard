@@ -5,10 +5,11 @@ import { useFetch } from '@/hooks/useFetch'
 import Loading from '@/components/Loading'
 import { AddTable } from './_components/Add'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
+import useUserRole from "@/hooks/useUserRole";
 
 
 export default function page() {
+  const { isAdmin, isLoaded: userRoleIsLoaded } = useUserRole();
   const { data, isLoading, isError } = useFetch('/api/table', ['tables'])
   if (isLoading) return <Loading />
   if (isError) return <p>Error fetching tables</p>
@@ -26,7 +27,7 @@ export default function page() {
           <AddTable />
         </CardHeader>
         <CardContent>
-          <TableCard data={data || []} />
+          <TableCard data={data || []}  isAdmin={isAdmin}/>
         </CardContent>
       </Card>
     </div>

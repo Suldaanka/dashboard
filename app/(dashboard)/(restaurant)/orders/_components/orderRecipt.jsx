@@ -2,7 +2,7 @@ import React from 'react'
 import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
 import { QRCodeSVG } from 'qrcode.react';
-import { PrinterIcon } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 export default function OrderRecipt({ data }) {
   const HotelInfo = () => (
@@ -18,26 +18,31 @@ export default function OrderRecipt({ data }) {
   const Divider = () => (
     <div className="border-t border-dashed border-gray-400 my-3 w-full"></div>
   );
+  
   if (!data || !data.id) {
     return null; 
   }
+  
   const contentRef = useRef()
   const reactToPrintFn = useReactToPrint({ contentRef });
 
-  const formattedDate = new Date().toLocaleDateString();
-  const formattedTime = new Date().toLocaleTimeString();
+  const formattedDate = new Date(data.createdAt).toLocaleDateString();
+  const formattedTime = new Date(data.createdAt).toLocaleTimeString();
 
-
+  // Calculate subtotal correctly: unit_price * quantity for each item
   const calculatedSubtotal = data.items.reduce((sum, item) => {
-    return sum + (Number(item.price) * item.quantity);
+    const unitPrice = Number(item.menuItem.price);
+    const quantity = item.quantity;
+    return sum + (unitPrice * quantity);
   }, 0);
 
   const subtotal = calculatedSubtotal;
   const tax = subtotal * 0.05;
   const grandTotal = subtotal + tax;
+
   return (
     <div className="max-w-md mx-auto">
-      <PrinterIcon onClick={reactToPrintFn} className="text-green-500"/>
+      <Printer onClick={reactToPrintFn} className="text-green-500 cursor-pointer"/>
 
       <div
         ref={contentRef} 
@@ -60,24 +65,35 @@ export default function OrderRecipt({ data }) {
             <p className="text-sm mt-1">Room #{data.room.number}</p>
           )}
           <p className="text-xs">Order #{data.id.slice(0, 6)}</p>
-          <p className="text-xs">Waiter: {data?.user?.name || 'N/A'}</p>
         </div>
 
+
         <Divider />
+
         <div className="mb-4">
           <div className="flex justify-between text-sm font-bold mb-2">
             <span>Item</span>
             <span>Qty</span>
-            <span>Price</span>
+            <span>Unit</span>
+            <span>Total</span>
           </div>
 
-          {data.items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm mb-1">
-              <span className="w-1/2 truncate">{item.menuItem.name}</span>
-              <span className="text-center w-1/6">{item.quantity}</span>
-              <span className="text-right w-1/3">${Number(item.price).toFixed(2)}</span>
-            </div>
-          ))}
+          {data.items.map((item) => {
+            const unitPrice = Number(item.menuItem.price);
+            const quantity = item.quantity;
+            const itemTotal = unitPrice * quantity;
+            
+            return (
+              <div key={item.id} className="mb-2">
+                <div className="flex justify-between text-sm">
+                  <span className="w-2/5 truncate">{item.menuItem.name}</span>
+                  <span className="text-center w-1/6">{quantity}</span>
+                  <span className="text-center w-1/6">${unitPrice.toFixed(2)}</span>
+                  <span className="text-right w-1/6">${itemTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <Divider />
@@ -94,13 +110,13 @@ export default function OrderRecipt({ data }) {
           <div className="flex justify-between font-bold text-base">
             <span>GRAND TOTAL:</span>
             <span>${grandTotal.toFixed(2)}</span>
-            
           </div>
         </div>
+        
         <Divider />
 
         <div className="flex justify-center mb-2">
-          <QRCodeSVG value={data.id} />
+          <QRCodeSVG value={data.id} size={80} />
         </div>
 
         <p className="text-center text-xs">Scan for order details</p>

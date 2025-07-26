@@ -3,12 +3,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OrderDetails } from "./orderdetails";
 import { useSelector } from "react-redux";
-import { Eye, XCircle } from "lucide-react";
+import { Eye, XCircle, MoreVertical, Printer } from "lucide-react";
 import { useFetch } from "@/hooks/useFetch";
 import OrderRecipt from "./orderRecipt";
 
@@ -43,8 +49,6 @@ export default function OrderCardList({ data = [] }) {
       console.error("Error updating order status:", error);
     }
   };
-  
-  
 
   // Navigate to order items page
   const orderView = (id) => {
@@ -78,19 +82,46 @@ export default function OrderCardList({ data = [] }) {
     );
   }
 
-
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {data.map((order) => (
         <Card key={order?.id || 'unknown'}>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Order #{order?.id ? order.id.slice(0, 6) : 'N/A'}
-            </CardTitle>
-            <div className="text-sm text-muted-foreground">
-              {isClient ? formatDate(order?.createdAt) : "Loading..."}
+          <CardHeader className="relative">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <CardTitle className="text-lg">
+                  Order #{order?.id ? order.id.slice(0, 6) : 'N/A'}
+                </CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  {isClient ? formatDate(order?.createdAt) : "Loading..."}
+                </div>
+              </div>
+              
+              {/* Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => orderView(order.id)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    <span>View Order</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <div className="flex items-center cursor-pointer">
+                      <Printer className="mr-2 h-4 w-4" />
+                      <span>Print Receipt</span>
+                      <OrderRecipt data={order} />
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
+          
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between">
               <span>Status:</span>
@@ -126,10 +157,11 @@ export default function OrderCardList({ data = [] }) {
                 <span>0{order.table.number}</span>
               </div>
             )}
-             <div className="flex items-center justify-between">
-                <span>Waiter:</span>
-                <span>{order?.user?.name || 'Unknown'}</span>
-              </div>
+            <div className="flex items-center justify-between">
+              <span>Waiter:</span>
+              <span>{order?.user?.name || 'Unknown'}</span>
+            </div>
+            
             <div className="flex flex-col gap-2">
               {/* Status update buttons */}
               <div className="flex gap-2 justify-between">
@@ -149,29 +181,16 @@ export default function OrderCardList({ data = [] }) {
                     Mark Served
                   </Button>
                 )}
-                <div className="flex items-center justify-between gap-2">
-                  {/* View Order Icon */}
-                  <Eye
-                    className="text-blue-500 cursor-pointer hover:scale-105 transition"
+                
+                {/* Cancel Order Icon - Keep this separate as it's a critical action */}
+                {order?.status === "PENDING" && (
+                  <XCircle
+                    className="text-red-500 cursor-pointer hover:scale-105 transition"
                     size={22}
-                    onClick={() => orderView(order.id)}
+                    onClick={() => order?.id && updateOrderStatus(order.id, "CANCELLED")}
                   />
-                   {/* Cancel Order Icon */}
-                   {
-                    order?.status === "PENDING" ? (
-                      <XCircle
-                        className="text-red-500 cursor-pointer hover:scale-105 transition"
-                        size={22}
-                        onClick={() => order?.id && updateOrderStatus(order.id, "CANCELLED")}
-                      />
-                    ) : null
-                  }
-                  <OrderRecipt data={order} />
-                </div>
-
+                )}
               </div>
-
-
             </div>
           </CardContent>
         </Card>

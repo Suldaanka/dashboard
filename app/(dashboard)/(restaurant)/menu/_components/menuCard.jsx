@@ -9,7 +9,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 
-export default function MenuCard({ menuItems, onAddToOrder, onDeleteMenu }) {
+export default function MenuCard({ menuItems, role, onDeleteMenu }) {
   const dispatch = useDispatch()
   const router = useRouter()
 
@@ -76,10 +76,21 @@ export default function MenuCard({ menuItems, onAddToOrder, onDeleteMenu }) {
                 >
                   {item.status}
                 </span>
-                <div className="flex flex-row gap-2">
-                  <Edit size={18} onClick={() => EditMenu(item.id)}/>
-                  <Trash2 size={18} className="cursor-pointer text-red-500" onClick={() => handleDelete(item.id)} />
-                    
+                <div className="flex flex-row gap-2">                    
+                  {role === "ADMIN" && (
+                    <>
+                      <Trash2 
+                        size={18} 
+                        className="cursor-pointer text-red-500" 
+                        onClick={() => handleDelete(item.id)} 
+                      />
+                      <Edit 
+                        size={18} 
+                        className="cursor-pointer" 
+                        onClick={() => EditMenu(item.id)} 
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 

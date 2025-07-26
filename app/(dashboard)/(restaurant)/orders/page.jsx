@@ -18,8 +18,6 @@ import { QrReader } from "react-qr-reader";
 
 const STATUS_OPTIONS = ["PENDING", "IN_PROGRESS", "SERVED", "CANCELLED", "IS_PAYED"];
 
-
-
 const STATUS_COLORS = {
   PENDING: "bg-yellow-500 hover:bg-yellow-600",
   IN_PROGRESS: "bg-blue-500 hover:bg-blue-600", 
@@ -43,10 +41,12 @@ export default function Page() {
   // Determine which user data to use
   let user = null;
   let userRole = null;
+  let currentUserId = null;
   
   if (reduxUser && reduxStatus === 'succeeded') {
     user = reduxUser;
     userRole = reduxUser.role;
+    currentUserId = reduxUser.id;
   } else if (clerkUser && userId) {
     user = {
       id: clerkUser.id,
@@ -56,6 +56,7 @@ export default function Page() {
       role: clerkUser.publicMetadata?.role || 'USER'
     };
     userRole = clerkUser.publicMetadata?.role || 'USER';
+    currentUserId = clerkUser.id;
   }
   
   // Only fetch orders if we have a user (from either source)
@@ -110,7 +111,19 @@ export default function Page() {
     </Card>
   );
   
-  const filteredData = data.filter((order) => {
+  // Filter orders by user role
+  const userFilteredData = userRole === 'ADMIN' 
+    ? data // Admin sees all orders
+    : data.filter(order => {
+        // For non-admin users, show only their own orders
+        // Check both user.clerkId and user.id to handle different ID formats
+        return order.user?.clerkId === currentUserId || 
+               order.user?.id === currentUserId ||
+               order.userId === currentUserId;
+      });
+  
+  // Apply status and search filters
+  const filteredData = userFilteredData.filter((order) => {
     const matchStatus =
       statusFilter === "all" || order.status === statusFilter;
     
@@ -120,6 +133,12 @@ export default function Page() {
     
     return matchStatus && matchSearch;
   });
+
+  console.log('User Role:', userRole);
+  console.log('Current User ID:', currentUserId);
+  console.log('Total Orders:', data.length);
+  console.log('User Filtered Orders:', userFilteredData.length);
+  console.log('Final Filtered Orders:', filteredData.length);
 
   const formatStatusText = (status) => {
     return status
@@ -132,7 +151,14 @@ export default function Page() {
     <div className="container mx-auto p-4 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Order Management</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Order Management
+            {userRole !== 'ADMIN' && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (Your Orders Only)
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Status Filter Buttons */}
@@ -148,12 +174,12 @@ export default function Page() {
               >
                 All
                 <Badge variant="secondary" className="ml-2">
-                  {data.length}
+                  {userFilteredData.length}
                 </Badge>
               </Button>
               
               {STATUS_OPTIONS.map((status) => {
-                const count = data.filter(order => order.status === status).length;
+                const count = userFilteredData.filter(order => order.status === status).length;
                 return (
                   <Button
                     key={status}
@@ -203,7 +229,10 @@ export default function Page() {
           {/* Results Summary */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              Showing {filteredData.length} of {data.length} orders
+              Showing {filteredData.length} of {userFilteredData.length} orders
+              {userRole === 'ADMIN' && data.length !== userFilteredData.length && (
+                <span className="ml-1">(Total: {data.length})</span>
+              )}
             </span>
             {searchId && (
               <Button
@@ -228,7 +257,9 @@ export default function Page() {
               <p>
                 {searchId 
                   ? `No orders match your search "${searchId}"` 
-                  : `No orders with status "${formatStatusText(statusFilter)}"`
+                  : userRole === 'ADMIN'
+                    ? `No orders with status "${formatStatusText(statusFilter)}"`
+                    : `You have no orders with status "${formatStatusText(statusFilter)}"`
                 }
               </p>
             </div>

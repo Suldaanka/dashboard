@@ -2,12 +2,10 @@
 
 import React, { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Delete } from "lucide-react";
-import { useMutate } from "@/hooks/useMutate";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Trash } from "lucide-react";
 
-export default function TableCard({ data, onStatusChange }) {
+export default function TableCard({ data, onStatusChange, isAdmin }) {
   if (!Array.isArray(data)) {
     return (
       <div className="flex justify-center items-center h-64 w-full border rounded-lg">
@@ -27,24 +25,32 @@ export default function TableCard({ data, onStatusChange }) {
     );
   }
 
-  const TableCardItem = ({ table }) => {
+  const TableCardItem = ({ table, isAdmin }) => {
     const [status, setStatus] = useState(table.status);
     const [isEditing, setIsEditing] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
-    const mutate = useMutate();
+    // const mutate = useMutate(); // Uncomment if useMutate is actively used
 
     const handleStatusChange = async (newStatus) => {
       setStatus(newStatus);
       setIsEditing(false);
       try {
-        await fetch(`/api/table/updateStatus/${table.id}`, {
+        const response = await fetch(`/api/table/updateStatus/${table.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: newStatus }),
         });
+
+        if (!response.ok) {
+            throw new Error("Failed to update status");
+        }
+
         if (onStatusChange) onStatusChange(table.id, newStatus);
       } catch (error) {
         alert("Failed to update status");
+        console.error("Error updating table status:", error);
+        // Optionally revert status if update fails
+        // setStatus(table.status); 
       }
     };
 
@@ -62,9 +68,10 @@ export default function TableCard({ data, onStatusChange }) {
         }
 
         alert(`Table ${table.id} deleted successfully`);
-        window.location.reload();
+        window.location.reload(); // This will refresh the page to reflect the deletion
       } catch (error) {
         alert("Failed to delete table");
+        console.error("Error deleting table:", error);
       } finally {
         setShowConfirm(false);
       }
@@ -123,6 +130,7 @@ export default function TableCard({ data, onStatusChange }) {
       ];
     }
 
+    // Ensure we only render chairs up to the table's capacity
     chairPositions = chairPositions.slice(0, table.capacity);
 
     return (
@@ -191,9 +199,11 @@ export default function TableCard({ data, onStatusChange }) {
                 </svg>
                 <span className="text-sm font-medium text-muted-foreground">{table.capacity}</span>
               </div>
-              <button onClick={() => setShowConfirm(true)} aria-label="Delete Table">
-                <Trash size={18} />
-              </button>
+              {isAdmin && ( // Only show delete button if isAdmin is true
+                <button onClick={() => setShowConfirm(true)} aria-label="Delete Table" className="text-red-500 hover:text-red-700">
+                  <Trash size={18} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -220,7 +230,7 @@ export default function TableCard({ data, onStatusChange }) {
     <div className="mt-2 rounded-xl">
       <div className="flex flex-wrap gap-6">
         {data.map((table) => (
-          <TableCardItem key={table.id} table={table} />
+          <TableCardItem key={table.id} table={table} isAdmin={isAdmin} />
         ))}
       </div>
     </div>

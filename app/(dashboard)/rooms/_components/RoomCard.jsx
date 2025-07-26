@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useMutate } from '@/hooks/useMutate';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-
+import useUserRole from "@/hooks/useUserRole";
 export default function RoomCard({ data, onStatusChange }) {
+  const { userRole, isAdmin } = useUserRole();
   // Check if data is an array
   if (!Array.isArray(data)) {
     return (
@@ -173,17 +174,21 @@ export default function RoomCard({ data, onStatusChange }) {
                 </div>
               </DialogContent>
             </Dialog>
-            <button
-              onClick={handleDelete}
-              className="p-1.5 rounded-full text-destructive hover:bg-destructive/10 transition-colors"
-              title="Delete Room"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-              </svg>
-            </button>
+            {
+              isAdmin &&(
+                <button
+                onClick={handleDelete}
+                className="p-1.5 rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+                title="Delete Room"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+              </button>
+              )
+            }
           </div>
         </div>
         

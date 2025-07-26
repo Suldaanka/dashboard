@@ -13,15 +13,16 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs"
 import AccessDenied from "@/components/accessDenied";
+import useUserRole from "@/hooks/useUserRole";
 
-export default function Page({ sidebarCollapsed, orderSideCollapsed }) {
+export default function Page() {
   const { data: menuItems, isLoading, isError, mutate } = useFetch("/api/menu", ["menu"]);
   const [addMenu, setAddMenu] = useState(false);
   const [filteredItems, setFilteredItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { user, isLoaded } = useUser()
-
+  const { userRole, isAdmin } = useUserRole();
   // Extract unique categories when data loads
   const categories = menuItems && menuItems.length > 0 ?
     ["all", ...new Set(menuItems.map(item => item.category))] :
@@ -141,7 +142,7 @@ const handleDeleteMenu = async (id) => {
             <p className="text-red-500">Error fetching menu items. Please try again later.</p>
           </div>
         ) : (
-          <MenuCard menuItems={filteredItems} onDeleteMenu={handleDeleteMenu} />
+          <MenuCard menuItems={filteredItems} onDeleteMenu={handleDeleteMenu} role={role}/>
         )}
       </div>
     </div>
